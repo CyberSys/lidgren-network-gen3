@@ -3,26 +3,29 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
+#if !UNITY_WEBPLAYER
 using System.Net.NetworkInformation;
+#endif
 using System.Net.Sockets;
 using System.Security.Cryptography;
 
 namespace Lidgren.Network
 {
-	public static partial class NetUtility
-	{
-		private static readonly long s_timeInitialized = Stopwatch.GetTimestamp();
-		private static readonly double s_dInvFreq = 1.0 / (double)Stopwatch.Frequency;
-		
-		[CLSCompliant(false)]
-		public static ulong GetPlatformSeed(int seedInc)
-		{
-			ulong seed = (ulong)System.Diagnostics.Stopwatch.GetTimestamp();
-			return seed ^ ((ulong)Environment.WorkingSet + (ulong)seedInc);
-		}
+    public static partial class NetUtility
+    {
+        private static readonly long s_timeInitialized = Stopwatch.GetTimestamp();
+        private static readonly double s_dInvFreq = 1.0 / (double)Stopwatch.Frequency;
 
-		public static double Now { get { return (double)(Stopwatch.GetTimestamp() - s_timeInitialized) * s_dInvFreq; } }
+        [CLSCompliant(false)]
+        public static ulong GetPlatformSeed(int seedInc) {
+            ulong seed = (ulong)System.Diagnostics.Stopwatch.GetTimestamp();
+            return seed ^ ((ulong)Environment.WorkingSet + (ulong)seedInc);
+        }
 
+        public static double Now { get { return (double)(Stopwatch.GetTimestamp() - s_timeInitialized) * s_dInvFreq; } }
+#if UNITY_WEBPLAYER
+        //ToDo:
+#else
 		private static NetworkInterface GetNetworkInterface()
 		{
 			var computerProperties = IPGlobalProperties.GetIPGlobalProperties();
@@ -58,20 +61,50 @@ namespace Lidgren.Network
 			}
 			return best;
 		}
-
-		/// <summary>
-		/// If available, returns the bytes of the physical (MAC) address for the first usable network interface
-		/// </summary>
-		public static byte[] GetMacAddressBytes()
-		{
+#endif
+        /// <summary>
+        /// If available, returns the bytes of the physical (MAC) address for the first usable network interface
+        /// </summary>
+        public static byte[] GetMacAddressBytes() {
+#if UNITY_WEBPLAYER
+            IPAddress ipas=IPAddress.Parse(UnityEngine.Network.player.ipAddress);
+            return ipas.GetAddressBytes();
+            //UnityEngine.Network.player.externalIP
+            //or Network.player.ipAddress
+            //IPHostEntry iep = Dns.GetHostEntry(Dns.GetHostName());
+            //IPAddress ip = null;
+            //foreach (var v in iep.AddressList) {
+            //    if (v.AddressFamily.ToString() == ProtocolFamily.InterNetwork.ToString()) {
+            //        ip = v;
+            //    }
+            //}
+            //return ip.GetAddressBytes();
+#else
 			var ni = GetNetworkInterface();
 			if (ni == null)
 				return null;
 			return ni.GetPhysicalAddress().GetAddressBytes();
-		}
+#endif
+        }
 
-		public static IPAddress GetBroadcastAddress()
-		{
+        public static IPAddress GetBroadcastAddress() {
+#if UNITY_WEBPLAYER
+            IPAddress ipas = null;
+            IPAddress.TryParse(UnityEngine.Network.player.ipAddress, out ipas);
+            byte[] mask_GetAddressBytes = new byte[] {255,255,255,0 };
+            //
+            byte[] ipAdressBytes = ipas.GetAddressBytes();
+            byte[] subnetMaskBytes = mask_GetAddressBytes;
+            if (ipAdressBytes.Length != subnetMaskBytes.Length) {
+                return new IPAddress(new byte[]{255,255,255,255});
+            }
+            byte[] broadcastAddress = new byte[ipAdressBytes.Length];
+            for (int i = 0; i < broadcastAddress.Length; i++) {
+                broadcastAddress[i] = (byte)(ipAdressBytes[i] | (subnetMaskBytes[i] ^ 255));
+            }
+            return new IPAddress(broadcastAddress);
+#else
+
 			var ni = GetNetworkInterface();
 			if (ni == null)
 				return null;
@@ -97,13 +130,19 @@ namespace Lidgren.Network
 				}
 			}
 			return IPAddress.Broadcast;
-		}
+#endif
+        }
 
-		/// <summary>
-		/// Gets my local IPv4 address (not necessarily external) and subnet mask
-		/// </summary>
-		public static IPAddress GetMyAddress(out IPAddress mask)
-		{
+        /// <summary>
+        /// Gets my local IPv4 address (not necessarily external) and subnet mask
+        /// </summary>
+        public static IPAddress GetMyAddress(out IPAddress mask) {
+#if UNITY_WEBPLAYER
+            IPAddress ipas = null;
+            IPAddress.TryParse(UnityEngine.Network.player.ipAddress,out ipas);
+            mask = ipas;
+            return ipas;
+#else
 			var ni = GetNetworkInterface();
 			if (ni == null)
 			{
@@ -123,34 +162,32 @@ namespace Lidgren.Network
 
 			mask = null;
 			return null;
-		}
+#endif
+        }
 
-		public static void Sleep(int milliseconds)
-		{
-			System.Threading.Thread.Sleep(milliseconds);
-		}
+        public static void Sleep(int milliseconds) {
+            System.Threading.Thread.Sleep(milliseconds);
+        }
 
-		public static IPAddress CreateAddressFromBytes(byte[] bytes)
-		{
-			return new IPAddress(bytes);
-		}
-		
-		private static readonly SHA256 s_sha = SHA256.Create();
-		public static byte[] ComputeSHAHash(byte[] bytes, int offset, int count)
-		{
-			return s_sha.ComputeHash(bytes, offset, count);
-		}
-	}
+        public static IPAddress CreateAddressFromBytes(byte[] bytes) {
+            return new IPAddress(bytes);
+        }
 
-	public static partial class NetTime
-	{
-		private static readonly long s_timeInitialized = Stopwatch.GetTimestamp();
-		private static readonly double s_dInvFreq = 1.0 / (double)Stopwatch.Frequency;
-		
-		/// <summary>
-		/// Get number of seconds since the application started
-		/// </summary>
-		public static double Now { get { return (double)(Stopwatch.GetTimestamp() - s_timeInitialized) * s_dInvFreq; } }
-	}
+        private static readonly SHA256 s_sha = SHA256.Create();
+        public static byte[] ComputeSHAHash(byte[] bytes, int offset, int count) {
+            return s_sha.ComputeHash(bytes, offset, count);
+        }
+    }
+
+    public static partial class NetTime
+    {
+        private static readonly long s_timeInitialized = Stopwatch.GetTimestamp();
+        private static readonly double s_dInvFreq = 1.0 / (double)Stopwatch.Frequency;
+
+        /// <summary>
+        /// Get number of seconds since the application started
+        /// </summary>
+        public static double Now { get { return (double)(Stopwatch.GetTimestamp() - s_timeInitialized) * s_dInvFreq; } }
+    }
 }
 #endif
