@@ -93,11 +93,15 @@ namespace Lidgren.Network
 					value = readMethod.Invoke(this, null);
 
 					// set the value
+
 //#if UNITY_WEBPLAYER || UNITY_4_5
-					var setMethod = fi.GetSetMethod();
+//					var setMethod = fi.GetSetMethod();
 //#else
 					//var setMethod = fi.SetMethod;
 //#endif
+
+					var setMethod = fi.GetSetMethod();
+
 					if (setMethod != null)
 						setMethod.Invoke(target, new object[] { value });
 				}

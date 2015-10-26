@@ -78,11 +78,15 @@ namespace Lidgren.Network
 
 			foreach (PropertyInfo fi in fields)
 			{
+
 //#if UNITY_WEBPLAYER || UNITY_4_5
-				MethodInfo getMethod = fi.GetGetMethod();
+//				MethodInfo getMethod = fi.GetGetMethod();
 //#else
 //				MethodInfo getMethod = fi.GetMethod;
 //#endif
+
+				MethodInfo getMethod = fi.GetGetMethod();
+
 				if (getMethod != null)
 				{
 					object value = getMethod.Invoke(ob, null);
