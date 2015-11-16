@@ -34,11 +34,13 @@ namespace Lidgren.Network
 
 		/// <summary>
 		/// Error; this value should never appear
+        /// 错误；这个值不应该出现
 		/// </summary>
 		Error = 0,
 
 		/// <summary>
 		/// Status for a connection changed
+        /// 连接改变的状态
 		/// </summary>
 		StatusChanged = 1 << 0,			// Data (string)
 
@@ -49,56 +51,67 @@ namespace Lidgren.Network
 
 		/// <summary>
 		/// Connection approval is needed
+        /// 需要连接批准
 		/// </summary>
 		ConnectionApproval = 1 << 2,	// Data
 
 		/// <summary>
 		/// Application data
+        /// 应用数据
 		/// </summary>
 		Data = 1 << 3,					// Data					Based on data received
 
 		/// <summary>
 		/// Receipt of delivery
+        /// 收到传递数据
 		/// </summary>
 		Receipt = 1 << 4,				// Data
 
 		/// <summary>
 		/// Discovery request for a response
+        /// 发现 响应的请求
 		/// </summary>
 		DiscoveryRequest = 1 << 5,		// (no data)
 
 		/// <summary>
 		/// Discovery response to a request
+        /// 发现 请求的响应
 		/// </summary>
 		DiscoveryResponse = 1 << 6,		// Data
 
 		/// <summary>
 		/// Verbose debug message
+        /// 详细的调试信息
 		/// </summary>
 		VerboseDebugMessage = 1 << 7,	// Data (string)
 
 		/// <summary>
 		/// Debug message
+        /// 调试信息
 		/// </summary>
 		DebugMessage = 1 << 8,			// Data (string)
 
 		/// <summary>
 		/// Warning message
+        /// 警告信息
 		/// </summary>
 		WarningMessage = 1 << 9,		// Data (string)
 
 		/// <summary>
 		/// Error message
+        /// 错误信息
 		/// </summary>
 		ErrorMessage = 1 << 10,			// Data (string)
 
 		/// <summary>
 		/// NAT introduction was successful
+        /// NAT介绍成功
 		/// </summary>
 		NatIntroductionSuccess = 1 << 11, // Data (as passed to master server)
 
 		/// <summary>
 		/// A roundtrip was measured and NetConnection.AverageRoundtripTime was updated
+        /// 测量和网络连接等往返的平均往返时间更新了。
 		/// </summary>
 		ConnectionLatencyUpdated = 1 << 12, // Seconds as a Single
 	}

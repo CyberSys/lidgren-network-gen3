@@ -180,24 +180,21 @@ namespace Lidgren.Network
 		/// <summary>
 		/// Read a pending message from any connection, blocking up to maxMillis if needed
 		/// </summary>
-	        public NetIncomingMessage WaitMessage(int maxMillis)
-	        {
-	            NetIncomingMessage msg = ReadMessage();
-	
-	            while (msg == null)
-	            {
-	                // This could return true...
-	                if (!MessageReceivedEvent.WaitOne(maxMillis))
-	                {
-	                    return null;
-	                }
-	
-	                // ... while this will still returns null. That's why we need to cycle.
-	                msg = ReadMessage();
-	            }
-	
-	            return msg;
-        	}
+        public NetIncomingMessage WaitMessage(int maxMillis) {
+            NetIncomingMessage msg = ReadMessage();
+
+            while (msg == null) {
+                // This could return true...
+                if (!MessageReceivedEvent.WaitOne(maxMillis)) {
+                    return null;
+                }
+
+                // ... while this will still returns null. That's why we need to cycle.
+                msg = ReadMessage();
+            }
+
+            return msg;
+        }
 
 		/// <summary>
 		/// Read a pending message from any connection, if any
