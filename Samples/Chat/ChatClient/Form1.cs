@@ -24,8 +24,8 @@ namespace ChatClient
 
 		public void DisableInput()
 		{
-			textBox1.Enabled = false;
-			button1.Enabled = false;
+			//textBox1.Enabled = false;
+			//button1.Enabled = false;
 		}
 
 		void textBox1_KeyDown(object sender, KeyEventArgs e)

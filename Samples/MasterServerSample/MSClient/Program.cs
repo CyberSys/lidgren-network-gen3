@@ -16,6 +16,8 @@ namespace MSClient
 		private static IPEndPoint m_masterServer;
 		private static Dictionary<long, IPEndPoint[]> m_hostList;
 
+        
+
 		[STAThread]
 		static void Main()
 		{
@@ -70,6 +72,10 @@ namespace MSClient
 							string token = inc.ReadString();
 							MessageBox.Show("Nat introduction success to " + inc.SenderEndPoint + " token is: " + token);
 							break;
+                        case NetIncomingMessageType.Data:
+                            string str=inc.ReadString();
+                            Console.WriteLine(str);
+                            break;
 					}
 				}
 			}

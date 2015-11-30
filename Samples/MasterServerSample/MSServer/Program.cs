@@ -53,6 +53,22 @@ namespace MSServer
 						case NetIncomingMessageType.ErrorMessage:
 							Console.WriteLine(inc.ReadString());
 							break;
+                        case NetIncomingMessageType.Data:
+                            // incoming chat message from a client
+                            string chat = inc.ReadString();
+                            Console.WriteLine(chat);
+                            //Output("Broadcasting '" + chat + "'");
+
+                            // broadcast this to all connections, except sender
+                            List<NetConnection> all = server.Connections; // get copy
+                            all.Remove(inc.SenderConnection);
+
+                            if (all.Count > 0) {
+                                NetOutgoingMessage om = server.CreateMessage();
+                                om.Write(NetUtility.ToHexString(inc.SenderConnection.RemoteUniqueIdentifier) + " said: " + chat);
+                                server.SendMessage(om, all, NetDeliveryMethod.ReliableOrdered, 0);
+                            }
+                            break;
 					}
 				}
 

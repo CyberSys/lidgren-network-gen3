@@ -161,3 +161,15 @@ pip-log.txt
 
 # Mac crap
 .DS_Store
+Samples/Chat/ChatClient/app.config
+Samples/SamplesCommon/SamplesCommon.csproj
+Samples/SamplesCommon/SamplesCommon.csproj
+Samples/MasterServerSample/MSServer/MSServer.csproj
+Samples/MasterServerSample/MSCommon/MSCommon.csproj
+Samples/Chat/ChatClient/Form1.cs
+Samples/Chat/ChatClient/Properties/Settings.Designer.cs
+Samples/Chat/ChatClient/Form1.cs
+Samples/Chat/ChatServer/app.config
+Samples/Chat/ChatServer/Program.cs
+Samples/Chat/ChatServer/Properties/Resources.Designer.cs
+Samples/Chat/ChatServer/Properties/Settings.Designer.cs

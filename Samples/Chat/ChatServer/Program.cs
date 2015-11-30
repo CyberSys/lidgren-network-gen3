@@ -9,126 +9,135 @@ using SamplesCommon;
 
 namespace ChatServer
 {
-	static class Program
-	{
-		private static Form1 s_form;
-		private static NetServer s_server;
-		private static NetPeerSettingsWindow s_settingsWindow;
-		
-		[STAThread]
-		static void Main()
-		{
-			Application.EnableVisualStyles();
-			Application.SetCompatibleTextRenderingDefault(false);
-			s_form = new Form1();
+    static class Program
+    {
+        private static Form1 s_form;
+        private static NetServer s_server;
+        private static NetPeerSettingsWindow s_settingsWindow;
 
-			// set up network
-			NetPeerConfiguration config = new NetPeerConfiguration("chat");
-			config.MaximumConnections = 100;
-			config.Port = 14242;
-			s_server = new NetServer(config);
+        [STAThread]
+        static void Main() {
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+           
+            // set up network
+            NetPeerConfiguration config = new NetPeerConfiguration("chat");
+            config.LocalAddress = new System.Net.IPAddress(new byte[]{192,168,1,202});
+            config.MaximumConnections = 1000;
+            config.Port = 14242;
+            s_server = new NetServer(config);
+            s_form = new Form1();
+            s_form.Show();
 
-			Application.Idle += new EventHandler(Application_Idle);
-			Application.Run(s_form);
-		}
+            while (true) {
+                ProcessNetWork();
+                Application.DoEvents();
+            }
+            Application.Idle += new EventHandler(Application_Idle);
+            //Application.Run(s_form);
+        }
 
-		private static void Output(string text)
-		{
-			NativeMethods.AppendText(s_form.richTextBox1, text);
-		}
+        private static void Output(string text) {
+            Console.WriteLine(text);
+            //NativeMethods.AppendText(s_form.richTextBox1, text);
+        }
 
-		private static void Application_Idle(object sender, EventArgs e)
-		{
-			while (NativeMethods.AppStillIdle)
-			{
-				NetIncomingMessage im;
-				while ((im = s_server.ReadMessage()) != null)
-				{
-					// handle incoming message
-					switch (im.MessageType)
-					{
-						case NetIncomingMessageType.DebugMessage:
-						case NetIncomingMessageType.ErrorMessage:
-						case NetIncomingMessageType.WarningMessage:
-						case NetIncomingMessageType.VerboseDebugMessage:
-							string text = im.ReadString();
-							Output(text);
-							break;
+        private static void Application_Idle(object sender, EventArgs e) {
+            
+            while (NativeMethods.AppStillIdle) {
+                ProcessNetWork();
+                Thread.Sleep(1);
+            }
+        }
 
-						case NetIncomingMessageType.StatusChanged:
-							NetConnectionStatus status = (NetConnectionStatus)im.ReadByte();
+        private static void ProcessNetWork() {
+            //s_server.WaitMessage(100);
+            NetIncomingMessage im;
+            while ((im = s_server.ReadMessage()) != null) {
+                // handle incoming message
+                switch (im.MessageType) {
+                    case NetIncomingMessageType.DebugMessage:
+                    case NetIncomingMessageType.ErrorMessage:
+                    case NetIncomingMessageType.WarningMessage:
+                    case NetIncomingMessageType.VerboseDebugMessage:
+                        string text = im.ReadString();
+                        Output(text);
+                        break;
 
-							string reason = im.ReadString();
-							Output(NetUtility.ToHexString(im.SenderConnection.RemoteUniqueIdentifier) + " " + status + ": " + reason);
+                    case NetIncomingMessageType.StatusChanged:
+                        NetConnectionStatus status = (NetConnectionStatus)im.ReadByte();
 
-							if (status == NetConnectionStatus.Connected)
-								Output("Remote hail: " + im.SenderConnection.RemoteHailMessage.ReadString());
+                        string reason = im.ReadString();
+                        Output(NetUtility.ToHexString(im.SenderConnection.RemoteUniqueIdentifier) + " " + status + ": " + reason);
 
-							UpdateConnectionsList();
-							break;
-						case NetIncomingMessageType.Data:
-							// incoming chat message from a client
-							string chat = im.ReadString();
+                        if (status == NetConnectionStatus.Connected)
+                            Output("Remote hail: " + im.SenderConnection.RemoteHailMessage.ReadString());
 
-							Output("Broadcasting '" + chat + "'");
+                        UpdateConnectionsList();
+                        break;
+                    case NetIncomingMessageType.Data:
+                        // incoming chat message from a client
+                        string chat = im.ReadString();
 
-							// broadcast this to all connections, except sender
-							List<NetConnection> all = s_server.Connections; // get copy
-							all.Remove(im.SenderConnection);
+                        Output("Broadcasting '" + chat + "'");
 
-							if (all.Count > 0)
-							{
-								NetOutgoingMessage om = s_server.CreateMessage();
-								om.Write(NetUtility.ToHexString(im.SenderConnection.RemoteUniqueIdentifier) + " said: " + chat);
-								s_server.SendMessage(om, all, NetDeliveryMethod.ReliableOrdered, 0);
-							}
-							break;
-						default:
-							Output("Unhandled type: " + im.MessageType + " " + im.LengthBytes + " bytes " + im.DeliveryMethod + "|" + im.SequenceChannel);
-							break;
-					}
-					s_server.Recycle(im);
-				}
-				Thread.Sleep(1);
-			}
-		}
+                        // broadcast this to all connections, except sender
+                        List<NetConnection> all = s_server.Connections; // get copy
+                        all.Remove(im.SenderConnection);
 
-		private static void UpdateConnectionsList()
-		{
-			s_form.listBox1.Items.Clear();
+                        if (all.Count > 0) {
+                            NetOutgoingMessage om = s_server.CreateMessage();
+                            om.Write(NetUtility.ToHexString(im.SenderConnection.RemoteUniqueIdentifier) + " said: " + chat);
+                            s_server.SendMessage(om, all, NetDeliveryMethod.ReliableOrdered, 0);
+                        }
+                        break;
+                    default:
+                        Output("Unhandled type: " + im.MessageType + " " + im.LengthBytes + " bytes " + im.DeliveryMethod + "|" + im.SequenceChannel);
+                        break;
+                }
+                s_server.Recycle(im);
+            }
+            
 
-			foreach (NetConnection conn in s_server.Connections)
-			{
-				string str = NetUtility.ToHexString(conn.RemoteUniqueIdentifier) + " from " + conn.RemoteEndPoint.ToString() + " [" + conn.Status + "]";
-				s_form.listBox1.Items.Add(str);
-			}
-		}
+        }
 
-		// called by the UI
-		public static void StartServer()
-		{
-			s_server.Start();
-		}
+        private static void UpdateConnectionsList() {
+            s_form.listBox1.Items.Clear();
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("------------update connects------------");
+            Console.WriteLine(s_server.Status.ToString());
+            Console.WriteLine("---------------------------------------");
+            Console.ResetColor();
+            foreach (NetConnection conn in s_server.Connections) {
+                string str = NetUtility.ToHexString(conn.RemoteUniqueIdentifier) + " from " + conn.RemoteEndPoint.ToString() + " [" + conn.Status + "]";
+                Console.WriteLine(str);
+                s_form.listBox1.Items.Add(str);
+            }
+        }
 
-		// called by the UI
-		public static void Shutdown()
-		{
-			s_server.Shutdown("Requested by user");
-		}
+        // called by the UI
+        public static void StartServer() {
+            Output("-------server start begin-----");
+            s_server.Start();
 
-		// called by the UI
-		public static void DisplaySettings()
-		{
-			if (s_settingsWindow != null && s_settingsWindow.Visible)
-			{
-				s_settingsWindow.Hide();
-			}
-			else
-			{
-				if (s_settingsWindow == null || s_settingsWindow.IsDisposed)
-					s_settingsWindow = new NetPeerSettingsWindow("Chat server settings", s_server);
-				s_settingsWindow.Show();
-			}
-		}
-	}
+        }
+
+        // called by the UI
+        public static void Shutdown() {
+            Output("-------server shut down begin-----");
+            s_server.Shutdown("Requested by user");
+        }
+
+        // called by the UI
+        public static void DisplaySettings() {
+            if (s_settingsWindow != null && s_settingsWindow.Visible) {
+                s_settingsWindow.Hide();
+            }
+            else {
+                if (s_settingsWindow == null || s_settingsWindow.IsDisposed)
+                    s_settingsWindow = new NetPeerSettingsWindow("Chat server settings", s_server);
+                s_settingsWindow.Show();
+            }
+        }
+    }
 }
