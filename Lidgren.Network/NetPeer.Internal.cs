@@ -69,15 +69,8 @@ namespace Lidgren.Network
 				return;
 
 			// remove all callbacks regardless of sync context
-		RestartRemoveCallbacks:
-			for (int i = 0; i < m_receiveCallbacks.Count; i++)
-			{
-				if (m_receiveCallbacks[i].Item2.Equals(callback))
-				{
-					m_receiveCallbacks.RemoveAt(i);
-					goto RestartRemoveCallbacks;
-				}
-			}
+            m_receiveCallbacks.RemoveAll(tuple => tuple.Item2.Equals(callback));
+
 			if (m_receiveCallbacks.Count < 1)
 				m_receiveCallbacks = null;
 		}
@@ -127,7 +120,7 @@ namespace Lidgren.Network
 				m_socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 
 			if (reBind)
-				m_socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, (int)1); 
+				m_socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, (int)1);
 
 			m_socket.ReceiveBufferSize = m_configuration.ReceiveBufferSize;
 			m_socket.SendBufferSize = m_configuration.SendBufferSize;
@@ -251,7 +244,7 @@ namespace Lidgren.Network
 			Heartbeat();
 
 			NetUtility.Sleep(10);
-			
+
 			lock (m_initializeLock)
 			{
 				try
@@ -419,7 +412,7 @@ namespace Lidgren.Network
 					switch (sx.SocketErrorCode)
 					{
 						case SocketError.ConnectionReset:
-							// connection reset by peer, aka connection forcibly closed aka "ICMP port unreachable" 
+							// connection reset by peer, aka connection forcibly closed aka "ICMP port unreachable"
 							// we should shut down the connection; but m_senderRemote seemingly cannot be trusted, so which connection should we shut down?!
 							// So, what to do?
 							LogWarning("ConnectionReset");
@@ -635,6 +628,14 @@ namespace Lidgren.Network
 				case NetMessageType.NatPunchMessage:
 					if (m_configuration.IsMessageTypeEnabled(NetIncomingMessageType.NatIntroductionSuccess))
 						HandleNatPunch(ptr, senderEndPoint);
+					return;
+				case NetMessageType.NatIntroductionConfirmRequest:
+					if (m_configuration.IsMessageTypeEnabled(NetIncomingMessageType.NatIntroductionSuccess))
+						HandleNatPunchConfirmRequest(ptr, senderEndPoint);
+					return;
+				case NetMessageType.NatIntroductionConfirmed:
+					if (m_configuration.IsMessageTypeEnabled(NetIncomingMessageType.NatIntroductionSuccess))
+						HandleNatPunchConfirmed(ptr, senderEndPoint);
 					return;
 				case NetMessageType.ConnectResponse:
 
