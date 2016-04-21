@@ -15,18 +15,22 @@ namespace ManyServer
 		[STAThread]
 		static void Main()
 		{
+            //would block send buffer full
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
 			MainForm = new Form1();
 
 			NetPeerConfiguration config = new NetPeerConfiguration("many");
+            
 			config.Port = 14242;
+            config.AutoFlushSendQueue = true;
+            config.SendBufferSize = 1024 * 512;
 #if DEBUG
 			config.SimulatedLoss = 0.02f;
 #else
 			// throw new Exception("Sample not relevant in RELEASE; statistics needed to make sense!");
 #endif
-			config.MaximumConnections = 256;
+			config.MaximumConnections = 50000;
 
 			Server = new NetServer(config);
 			Server.Start();

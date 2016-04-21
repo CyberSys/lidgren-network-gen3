@@ -18,13 +18,17 @@ namespace Lidgren.Network
         private static readonly long s_timeInitialized = Stopwatch.GetTimestamp();
         private static readonly double s_dInvFreq = 1.0 / (double)Stopwatch.Frequency;
 
+        /// <summary>
+        /// Get number of seconds since the application started
+        /// </summary>
+        public static double Now { get { return (double)(Stopwatch.GetTimestamp() - s_timeInitialized) * s_dInvFreq; } }
         [CLSCompliant(false)]
         public static ulong GetPlatformSeed(int seedInc) {
             ulong seed = (ulong)System.Diagnostics.Stopwatch.GetTimestamp();
             return seed ^ ((ulong)Environment.WorkingSet + (ulong)seedInc);
         }
 
-        public static double Now { get { return (double)(Stopwatch.GetTimestamp() - s_timeInitialized) * s_dInvFreq; } }
+      
 #if UNITY_WEBPLAYER
         //ToDo:
 #else
@@ -189,7 +193,7 @@ namespace Lidgren.Network
         /// <summary>
         /// Get number of seconds since the application started
         /// </summary>
-        public static double Now { get { return (double)(Stopwatch.GetTimestamp() - s_timeInitialized) * s_dInvFreq; } }
+       public static double Now { get { return (double)(Stopwatch.GetTimestamp() - s_timeInitialized) * s_dInvFreq; } }
     }
 }
 #endif

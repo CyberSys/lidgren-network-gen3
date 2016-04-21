@@ -5,6 +5,8 @@ namespace Lidgren.Network
 	public partial class NetConnection
 	{
 		private double m_sentPingTime;
+        private double m_recivePongTime;
+        public double PingTimeDelay;
 		private int m_sentPingNumber;
 		private double m_averageRoundtripTime;
 		private double m_timeoutDeadline = double.MaxValue;
@@ -94,7 +96,8 @@ namespace Lidgren.Network
 				m_peer.LogVerbose("Ping/Pong mismatch; dropped message?");
 				return;
 			}
-
+            m_recivePongTime = NetTime.Now;
+            PingTimeDelay = m_recivePongTime - m_sentPingTime;
 			m_timeoutDeadline = now + m_peerConfiguration.m_connectionTimeout;
 
 			double rtt = now - m_sentPingTime;

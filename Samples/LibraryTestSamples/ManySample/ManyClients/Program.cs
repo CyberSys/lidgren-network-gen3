@@ -18,7 +18,7 @@ namespace ManyClients
 
 			Clients = new List<Client>();
 
-			Application.Idle += new EventHandler(AppIdle);
+			//Application.Idle += new EventHandler(AppIdle);
 			Application.Run(new Form1());
 
 			foreach (var c in Clients)
@@ -29,15 +29,20 @@ namespace ManyClients
 		{
 			while (NativeMethods.AppStillIdle)
 			{
-				foreach (var c in Clients)
-					c.Heartbeat();
+                foreach (var c in Clients) {
+                    if (c.Nets == null) continue;
+                    for (int i = 0; i < c.Nets.Length; i++) {
+                        c.Heartbeat(i);
+                    }
+                }
+                
 				System.Threading.Thread.Sleep(1);
 			}
 		}
 
-		internal static void CreateClient()
+		internal static void CreateClient(int netClientCount)
 		{
-			Client client = new Client();
+			Client client = new Client(netClientCount);
 			client.Show();
 			Clients.Add(client);
 		}
